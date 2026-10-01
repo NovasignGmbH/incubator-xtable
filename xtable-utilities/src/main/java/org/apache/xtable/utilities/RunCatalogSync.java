@@ -19,6 +19,7 @@
 package org.apache.xtable.utilities;
 
 import static org.apache.xtable.utilities.RunSync.getCustomConfigurations;
+import static org.apache.xtable.utilities.RunSync.getSourceTableLocation;
 import static org.apache.xtable.utilities.RunSync.getValueFromConfig;
 import static org.apache.xtable.utilities.RunSync.loadHadoopConf;
 import static org.apache.xtable.utilities.RunSync.loadTableFormatConversionConfigs;
@@ -65,7 +66,6 @@ import org.apache.xtable.model.catalog.CatalogTableIdentifier;
 import org.apache.xtable.model.catalog.HierarchicalTableIdentifier;
 import org.apache.xtable.model.catalog.ThreePartHierarchicalTableIdentifier;
 import org.apache.xtable.model.storage.CatalogType;
-import org.apache.xtable.model.storage.TableFormat;
 import org.apache.xtable.model.sync.SyncMode;
 import org.apache.xtable.reflection.ReflectionUtils;
 import org.apache.xtable.spi.extractor.CatalogConversionSource;
@@ -242,13 +242,6 @@ public class RunCatalogSync {
       }
     }
     return sourceTable;
-  }
-
-  static String getSourceTableLocation(String targetTableFormat, SourceTable sourceTable) {
-    return sourceTable.getFormatName().equals(TableFormat.ICEBERG)
-            && targetTableFormat.equals(TableFormat.HUDI)
-        ? sourceTable.getDataPath()
-        : sourceTable.getBasePath();
   }
 
   static Map<String, ConversionSourceProvider> getConversionSourceProviders(

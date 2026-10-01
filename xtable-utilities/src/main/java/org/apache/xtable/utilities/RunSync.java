@@ -136,7 +136,7 @@ public class RunSync {
   }
 
   static List<TargetTable> targetTableBuilder(
-      @NonNull DatasetConfig.Table table,
+      @NonNull SourceTable sourceTable,
       CatalogConfig catalogConfig,
       @NonNull List<String> tableFormatList) {
     List<TargetTable> targetTables =
@@ -144,15 +144,25 @@ public class RunSync {
             .map(
                 tableFormat ->
                     TargetTable.builder()
-                        .name(table.getTableName())
-                        .basePath(table.getTableBasePath())
-                        .namespace(
-                            table.getNamespace() == null ? null : table.getNamespace().split("\\."))
+                        .name(sourceTable.getName())
+                        .basePath(getSourceTableLocation(tableFormat, sourceTable))
+                        .namespace(sourceTable.getNamespace())
                         .catalogConfig(catalogConfig)
                         .formatName(tableFormat)
                         .build())
             .collect(Collectors.toList());
     return targetTables;
+  }
+
+  /**
+   * Returns the base path for a target table. A Hudi target of an Iceberg source is rooted at the
+   * source's data path, since Hudi partition paths are relative to the Hudi base path.
+   */
+  static String getSourceTableLocation(String targetTableFormat, SourceTable sourceTable) {
+    return sourceTable.getFormatName().equals(TableFormat.ICEBERG)
+            && targetTableFormat.equals(TableFormat.HUDI)
+        ? sourceTable.getDataPath()
+        : sourceTable.getBasePath();
   }
 
   static void syncTableMetdata(
@@ -175,7 +185,8 @@ public class RunSync {
 
       SourceTable sourceTable =
           sourceTableBuilder(table, catalogConfig, datasetConfig, sourceProperties);
-      List<TargetTable> targetTables = targetTableBuilder(table, catalogConfig, tableFormatList);
+      List<TargetTable> targetTables =
+          targetTableBuilder(sourceTable, catalogConfig, tableFormatList);
       ConversionConfig conversionConfig =
           ConversionConfig.builder()
               .sourceTable(sourceTable)
